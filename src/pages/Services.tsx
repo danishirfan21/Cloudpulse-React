@@ -32,6 +32,7 @@ const Services: React.FC = () => {
   const [selectedService, setSelectedService] = useState<any>(null);
   const [showDeployModal, setShowDeployModal] = useState(false);
   const [showServiceDetails, setShowServiceDetails] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
   const [filterStatus, setFilterStatus] = useState<
     'all' | 'healthy' | 'degraded' | 'down'
   >('all');
@@ -81,6 +82,7 @@ const Services: React.FC = () => {
     version: string,
     environment: string
   ) => {
+    setIsDeploying(true);
     showInfo(`Deploying ${serviceName} ${version} to ${environment}...`);
 
     setTimeout(() => {
@@ -103,6 +105,7 @@ const Services: React.FC = () => {
         `${serviceName} ${version} deployed successfully to ${environment}`
       );
       setShowDeployModal(false);
+      setIsDeploying(false);
     }, 2000);
   };
 
@@ -353,9 +356,10 @@ const Services: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+              disabled={isDeploying}
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Deploy
+              {isDeploying ? 'Deploying...' : 'Deploy'}
             </button>
           </div>
         </form>

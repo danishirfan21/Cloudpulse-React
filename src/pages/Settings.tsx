@@ -16,6 +16,14 @@ const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const { toasts, removeToast, showSuccess } = useToast();
 
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+  const [isToggling2FA, setIsToggling2FA] = useState(false);
+  const [togglingIntegration, setTogglingIntegration] = useState<string | null>(
+    null
+  );
   // Profile state
   const [firstName, setFirstName] = useState('Danish');
   const [lastName, setLastName] = useState('Developer');
@@ -69,11 +77,19 @@ const Settings: React.FC = () => {
 
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
-    showSuccess('Profile updated successfully');
+    setIsSavingProfile(true);
+    setTimeout(() => {
+      showSuccess('Profile updated successfully');
+      setIsSavingProfile(false);
+    }, 1000);
   };
 
   const handleNotificationsSave = () => {
-    showSuccess('Notification preferences saved');
+    setIsSavingNotifications(true);
+    setTimeout(() => {
+      showSuccess('Notification preferences saved');
+      setIsSavingNotifications(false);
+    }, 1000);
   };
 
   const handlePasswordChange = (e: React.FormEvent) => {
@@ -81,33 +97,49 @@ const Settings: React.FC = () => {
     if (newPassword !== confirmPassword) {
       return;
     }
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    showSuccess('Password updated successfully');
-  };
-
-  const handleToggle2FA = () => {
-    setTwoFactorEnabled(!twoFactorEnabled);
-    showSuccess(twoFactorEnabled ? '2FA disabled' : '2FA enabled');
-  };
-
-  const handleToggleIntegration = (name: string) => {
-    setIntegrations((prev) => ({
-      ...prev,
-      [name]: !prev[name as keyof typeof prev],
-    }));
-    showSuccess(
-      `${name} ${
-        integrations[name as keyof typeof integrations]
-          ? 'disconnected'
-          : 'connected'
-      }`
-    );
+    setIsSavingPassword(true);
+    setTimeout(() => {
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      showSuccess('Password updated successfully');
+      setIsSavingPassword(false);
+    }, 1000);
   };
 
   const handlePreferencesSave = () => {
-    showSuccess('Preferences saved successfully');
+    setIsSavingPreferences(true);
+    setTimeout(() => {
+      showSuccess('Preferences saved successfully');
+      setIsSavingPreferences(false);
+    }, 1000);
+  };
+
+  const handleToggle2FA = () => {
+    setIsToggling2FA(true);
+    setTimeout(() => {
+      setTwoFactorEnabled(!twoFactorEnabled);
+      showSuccess(twoFactorEnabled ? '2FA disabled' : '2FA enabled');
+      setIsToggling2FA(false);
+    }, 1000);
+  };
+
+  const handleToggleIntegration = (name: string) => {
+    setTogglingIntegration(name);
+    setTimeout(() => {
+      setIntegrations((prev) => ({
+        ...prev,
+        [name]: !prev[name as keyof typeof prev],
+      }));
+      showSuccess(
+        `${name} ${
+          integrations[name as keyof typeof integrations]
+            ? 'disconnected'
+            : 'connected'
+        }`
+      );
+      setTogglingIntegration(null);
+    }, 1000);
   };
 
   return (
@@ -226,9 +258,10 @@ const Settings: React.FC = () => {
                     <div className="pt-4">
                       <button
                         type="submit"
-                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                        disabled={isSavingProfile}
+                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Save Changes
+                        {isSavingProfile ? 'Saving...' : 'Save Changes'}
                       </button>
                     </div>
                   </form>
@@ -367,9 +400,12 @@ const Settings: React.FC = () => {
                     <div className="pt-4">
                       <button
                         onClick={handleNotificationsSave}
-                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                        disabled={isSavingNotifications}
+                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Save Preferences
+                        {isSavingNotifications
+                          ? 'Saving...'
+                          : 'Save Preferences'}
                       </button>
                     </div>
                   </div>
@@ -427,9 +463,10 @@ const Settings: React.FC = () => {
                         </div>
                         <button
                           type="submit"
-                          className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                          disabled={isSavingPassword}
+                          className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Update Password
+                          {isSavingPassword ? 'Updating...' : 'Update Password'}
                         </button>
                       </form>
                     </div>
@@ -447,13 +484,18 @@ const Settings: React.FC = () => {
                         </div>
                         <button
                           onClick={handleToggle2FA}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          disabled={isToggling2FA}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             twoFactorEnabled
                               ? 'bg-[#ff4757] hover:bg-[#ff4757]/90'
                               : 'bg-[#00d084] hover:bg-[#00d084]/90'
                           }`}
                         >
-                          {twoFactorEnabled ? 'Disable' : 'Enable'}
+                          {isToggling2FA
+                            ? 'Processing...'
+                            : twoFactorEnabled
+                            ? 'Disable'
+                            : 'Enable'}
                         </button>
                       </div>
                     </div>
@@ -559,7 +601,8 @@ const Settings: React.FC = () => {
                           onClick={() =>
                             handleToggleIntegration(integration.name)
                           }
-                          className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          disabled={togglingIntegration === integration.name}
+                          className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                             integrations[
                               integration.name as keyof typeof integrations
                             ]
@@ -567,9 +610,11 @@ const Settings: React.FC = () => {
                               : 'bg-[#1e90ff] text-white hover:bg-[#1e90ff]/90'
                           }`}
                         >
-                          {integrations[
-                            integration.name as keyof typeof integrations
-                          ]
+                          {togglingIntegration === integration.name
+                            ? 'Processing...'
+                            : integrations[
+                                integration.name as keyof typeof integrations
+                              ]
                             ? 'Connected'
                             : 'Connect'}
                         </button>
@@ -663,9 +708,10 @@ const Settings: React.FC = () => {
                     <div className="pt-4">
                       <button
                         onClick={handlePreferencesSave}
-                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                        disabled={isSavingPreferences}
+                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Save Preferences
+                        {isSavingPreferences ? 'Saving...' : 'Save Preferences'}
                       </button>
                     </div>
                   </div>

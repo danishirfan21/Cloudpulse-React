@@ -83,6 +83,7 @@ const Alerts: React.FC = () => {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [showAcknowledged, setShowAcknowledged] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toasts, removeToast, showSuccess, showInfo } = useToast();
 
   const getSeverityConfig = (severity: string) => {
@@ -122,17 +123,22 @@ const Alerts: React.FC = () => {
     severity: string,
     notifications: string[]
   ) => {
-    const newRule: AlertRule = {
-      id: String(alertRules.length + 1),
-      name,
-      condition,
-      severity: severity as 'critical' | 'warning' | 'info',
-      notifications,
-    };
+    setIsSubmitting(true);
 
-    setAlertRules([newRule, ...alertRules]);
-    showSuccess(`Alert rule "${name}" created successfully`);
-    setShowConfigModal(false);
+    setTimeout(() => {
+      const newRule: AlertRule = {
+        id: String(alertRules.length + 1),
+        name,
+        condition,
+        severity: severity as 'critical' | 'warning' | 'info',
+        notifications,
+      };
+
+      setAlertRules([newRule, ...alertRules]);
+      showSuccess(`Alert rule "${name}" created successfully`);
+      setShowConfigModal(false);
+      setIsSubmitting(false);
+    }, 1000);
   };
 
   const filteredAlerts = alerts.filter((alert) => {
@@ -485,9 +491,10 @@ const Alerts: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create Rule
+              {isSubmitting ? 'Creating...' : 'Create Rule'}
             </button>
           </div>
         </form>

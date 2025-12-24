@@ -17,6 +17,7 @@ const APIs: React.FC = () => {
   const [selectedEndpoint, setSelectedEndpoint] = useState<any>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterMethod, setFilterMethod] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<
     'all' | 'healthy' | 'degraded' | 'down'
@@ -40,19 +41,24 @@ const APIs: React.FC = () => {
     method: string,
     description: string
   ) => {
-    const newEndpoint = {
-      id: String(endpoints.length + 1),
-      path,
-      method: method as any,
-      description,
-      status: 'healthy' as const,
-      requestsPerMin: 0,
-      avgLatency: '0ms',
-      errorRate: '0.00%',
-    };
-    setEndpoints([newEndpoint, ...endpoints]);
-    showSuccess(`Endpoint ${path} added successfully`);
-    setShowAddModal(false);
+    setIsSubmitting(true);
+
+    setTimeout(() => {
+      const newEndpoint = {
+        id: String(endpoints.length + 1),
+        path,
+        method: method as any,
+        description,
+        status: 'healthy' as const,
+        requestsPerMin: 0,
+        avgLatency: '0ms',
+        errorRate: '0.00%',
+      };
+      setEndpoints([newEndpoint, ...endpoints]);
+      showSuccess(`Endpoint ${path} added successfully`);
+      setShowAddModal(false);
+      setIsSubmitting(false);
+    }, 1000);
   };
 
   const handleToggleMonitoring = (endpoint: any) => {
@@ -348,9 +354,10 @@ const APIs: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Endpoint
+              {isSubmitting ? 'Adding...' : 'Add Endpoint'}
             </button>
           </div>
         </form>

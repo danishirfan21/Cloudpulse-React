@@ -30,6 +30,7 @@ interface DatabaseType {
 const Databases: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const { toasts, removeToast, showSuccess } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [databases, setDatabases] = useState<DatabaseType[]>([
     {
@@ -115,25 +116,30 @@ const Databases: React.FC = () => {
     version: string,
     maxConnections: string
   ) => {
-    const newDatabase: DatabaseType = {
-      id: String(databases.length + 1),
-      name,
-      type,
-      version,
-      status: 'healthy',
-      connections: 0,
-      maxConnections: parseInt(maxConnections),
-      size: '0 GB',
-      uptime: '100%',
-      queries: '0/s',
-      avgQueryTime: '0ms',
-      replication: 'N/A',
-      lastBackup: 'Never',
-    };
+    setIsSubmitting(true);
 
-    setDatabases([newDatabase, ...databases]);
-    showSuccess(`Database ${name} added successfully`);
-    setShowAddModal(false);
+    setTimeout(() => {
+      const newDatabase: DatabaseType = {
+        id: String(databases.length + 1),
+        name,
+        type,
+        version,
+        status: 'healthy',
+        connections: 0,
+        maxConnections: parseInt(maxConnections),
+        size: '0 GB',
+        uptime: '100%',
+        queries: '0/s',
+        avgQueryTime: '0ms',
+        replication: 'N/A',
+        lastBackup: 'Never',
+      };
+
+      setDatabases([newDatabase, ...databases]);
+      showSuccess(`Database ${name} added successfully`);
+      setShowAddModal(false);
+      setIsSubmitting(false);
+    }, 1000);
   };
 
   const getStatusConfig = (status: string) => {
@@ -436,9 +442,10 @@ const Databases: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Add Database
+              {isSubmitting ? 'Adding...' : 'Add Database'}
             </button>
           </div>
         </form>
