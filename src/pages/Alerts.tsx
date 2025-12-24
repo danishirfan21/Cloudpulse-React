@@ -21,6 +21,14 @@ interface Alert {
   acknowledged: boolean;
 }
 
+interface AlertRule {
+  id: string;
+  name: string;
+  condition: string;
+  severity: 'critical' | 'warning' | 'info';
+  notifications: string[];
+}
+
 const Alerts: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([
     {
@@ -61,6 +69,16 @@ const Alerts: React.FC = () => {
     },
   ]);
 
+  const [alertRules, setAlertRules] = useState<AlertRule[]>([
+    {
+      id: '1',
+      name: 'High CPU Usage',
+      condition: 'CPU usage > 80%',
+      severity: 'critical',
+      notifications: ['Email', 'Slack'],
+    },
+  ]);
+
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [showAcknowledged, setShowAcknowledged] = useState(true);
@@ -98,7 +116,21 @@ const Alerts: React.FC = () => {
     showInfo('Acknowledged alerts cleared');
   };
 
-  const handleAddRule = (name: string, condition: string, severity: string) => {
+  const handleAddRule = (
+    name: string,
+    condition: string,
+    severity: string,
+    notifications: string[]
+  ) => {
+    const newRule: AlertRule = {
+      id: String(alertRules.length + 1),
+      name,
+      condition,
+      severity: severity as 'critical' | 'warning' | 'info',
+      notifications,
+    };
+
+    setAlertRules([...alertRules, newRule]);
     showSuccess(`Alert rule "${name}" created successfully`);
     setShowConfigModal(false);
   };
@@ -311,6 +343,43 @@ const Alerts: React.FC = () => {
               : 'No active alerts'}
           </div>
         )}
+
+        {/* Alert Rules Section */}
+        {alertRules.length > 0 && (
+          <div className="bg-[#1a1f29] rounded-lg border border-[#2d3540]/40 p-6">
+            <h2 className="text-lg font-semibold mb-4">
+              Active Alert Rules ({alertRules.length})
+            </h2>
+            <div className="space-y-2">
+              {alertRules.map((rule) => (
+                <div
+                  key={rule.id}
+                  className="flex items-center justify-between p-3 bg-[#242933] rounded-lg"
+                >
+                  <div>
+                    <div className="text-sm font-medium">{rule.name}</div>
+                    <div className="text-xs text-[#8b93a7] mt-1">
+                      {rule.condition}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        rule.severity === 'critical'
+                          ? 'bg-[#ff4757]/20 text-[#ff4757]'
+                          : rule.severity === 'warning'
+                          ? 'bg-[#ffa502]/20 text-[#ffa502]'
+                          : 'bg-[#1e90ff]/20 text-[#1e90ff]'
+                      }`}
+                    >
+                      {rule.severity}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Configure Rules Modal */}
@@ -327,7 +396,13 @@ const Alerts: React.FC = () => {
             const name = formData.get('name') as string;
             const condition = formData.get('condition') as string;
             const severity = formData.get('severity') as string;
-            handleAddRule(name, condition, severity);
+
+            const notifications: string[] = [];
+            if (formData.get('email')) notifications.push('Email');
+            if (formData.get('slack')) notifications.push('Slack');
+            if (formData.get('pagerduty')) notifications.push('PagerDuty');
+
+            handleAddRule(name, condition, severity, notifications);
           }}
           className="space-y-4"
         >
@@ -375,6 +450,7 @@ const Alerts: React.FC = () => {
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
+                  name="email"
                   defaultChecked
                   className="rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
                 />
@@ -383,6 +459,7 @@ const Alerts: React.FC = () => {
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
+                  name="slack"
                   defaultChecked
                   className="rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
                 />
@@ -391,6 +468,7 @@ const Alerts: React.FC = () => {
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
+                  name="pagerduty"
                   className="rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
                 />
                 <span className="text-sm">PagerDuty</span>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Database,
   Activity,
@@ -7,9 +7,31 @@ import {
   TrendingUp,
   AlertCircle,
 } from 'lucide-react';
+import Modal from '../components/common/Modal';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/common/Toast';
+
+interface DatabaseType {
+  id: string;
+  name: string;
+  type: string;
+  version: string;
+  status: 'healthy' | 'warning' | 'error';
+  connections: number;
+  maxConnections: number;
+  size: string;
+  uptime: string;
+  queries: string;
+  avgQueryTime: string;
+  replication: string;
+  lastBackup: string;
+}
 
 const Databases: React.FC = () => {
-  const databases = [
+  const [showAddModal, setShowAddModal] = useState(false);
+  const { toasts, removeToast, showSuccess } = useToast();
+
+  const [databases, setDatabases] = useState<DatabaseType[]>([
     {
       id: '1',
       name: 'PostgreSQL Primary',
@@ -85,7 +107,34 @@ const Databases: React.FC = () => {
       replication: 'Active',
       lastBackup: 'N/A',
     },
-  ];
+  ]);
+
+  const handleAddDatabase = (
+    name: string,
+    type: string,
+    version: string,
+    maxConnections: string
+  ) => {
+    const newDatabase: DatabaseType = {
+      id: String(databases.length + 1),
+      name,
+      type,
+      version,
+      status: 'healthy',
+      connections: 0,
+      maxConnections: parseInt(maxConnections),
+      size: '0 GB',
+      uptime: '100%',
+      queries: '0/s',
+      avgQueryTime: '0ms',
+      replication: 'N/A',
+      lastBackup: 'Never',
+    };
+
+    setDatabases([...databases, newDatabase]);
+    showSuccess(`Database ${name} added successfully`);
+    setShowAddModal(false);
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -106,6 +155,8 @@ const Databases: React.FC = () => {
 
   return (
     <div className="p-4 md:p-6 lg:p-10 w-full overflow-x-hidden">
+      <ToastContainer toasts={toasts} onClose={removeToast} />
+
       <div className="max-w-[1400px] mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -114,7 +165,10 @@ const Databases: React.FC = () => {
               Monitor database health, performance, and connections
             </p>
           </div>
-          <button className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors">
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+          >
             Add Database
           </button>
         </div>
@@ -304,6 +358,91 @@ const Databases: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Database Modal */}
+      <Modal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        title="Add New Database"
+        size="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const name = formData.get('name') as string;
+            const type = formData.get('type') as string;
+            const version = formData.get('version') as string;
+            const maxConnections = formData.get('maxConnections') as string;
+            handleAddDatabase(name, type, version, maxConnections);
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Database Name
+            </label>
+            <input
+              type="text"
+              name="name"
+              required
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+              placeholder="e.g., PostgreSQL Primary"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Type</label>
+            <select
+              name="type"
+              required
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+            >
+              <option>PostgreSQL</option>
+              <option>MySQL</option>
+              <option>MongoDB</option>
+              <option>Redis</option>
+              <option>Elasticsearch</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Version</label>
+            <input
+              type="text"
+              name="version"
+              required
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+              placeholder="e.g., 14.2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Max Connections
+            </label>
+            <input
+              type="number"
+              name="maxConnections"
+              required
+              defaultValue="100"
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAddModal(false)}
+              className="px-4 py-2 bg-[#242933] hover:bg-[#2d3540] rounded-lg text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+            >
+              Add Database
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

@@ -27,6 +27,7 @@ const Header: React.FC<HeaderProps> = ({
   const [showResults, setShowResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const timeRanges: TimeRange[] = ['1h', '6h', '24h', '7d', 'custom'];
@@ -102,6 +103,12 @@ const Header: React.FC<HeaderProps> = ({
         !searchRef.current.contains(event.target as Node)
       ) {
         setShowResults(false);
+      }
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target as Node)
+      ) {
+        setShowNotifications(false);
       }
     };
 
@@ -290,7 +297,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Alert Bell */}
-          <div className="relative">
+          <div className="relative" ref={notificationsRef}>
             <button
               className="relative p-2 hover:bg-[#242933] rounded-lg transition-colors"
               onClick={() => setShowNotifications(!showNotifications)}

@@ -9,9 +9,55 @@ import {
   Mail,
   Smartphone,
 } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/common/Toast';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const { toasts, removeToast, showSuccess } = useToast();
+
+  // Profile state
+  const [firstName, setFirstName] = useState('Danish');
+  const [lastName, setLastName] = useState('Developer');
+  const [email, setEmail] = useState('danish@cloudpulse.io');
+
+  // Notification state
+  const [emailNotifications, setEmailNotifications] = useState({
+    serviceAlerts: true,
+    deployments: true,
+    weeklyReports: false,
+    securityUpdates: true,
+  });
+
+  const [pushNotifications, setPushNotifications] = useState({
+    critical: true,
+    warning: true,
+    info: false,
+  });
+
+  // Security state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+
+  // Preferences state
+  const [theme, setTheme] = useState('Dark');
+  const [timezone, setTimezone] = useState(
+    'UTC+05:00 - Pakistan Standard Time'
+  );
+  const [logsRetention, setLogsRetention] = useState('7 days');
+  const [metricsRetention, setMetricsRetention] = useState('30 days');
+
+  // Integrations state
+  const [integrations, setIntegrations] = useState({
+    Slack: true,
+    PagerDuty: true,
+    Datadog: false,
+    Jira: false,
+    GitHub: true,
+    Webhooks: false,
+  });
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -21,8 +67,53 @@ const Settings: React.FC = () => {
     { id: 'preferences', label: 'Preferences', icon: Palette },
   ];
 
+  const handleProfileSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    showSuccess('Profile updated successfully');
+  };
+
+  const handleNotificationsSave = () => {
+    showSuccess('Notification preferences saved');
+  };
+
+  const handlePasswordChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      return;
+    }
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    showSuccess('Password updated successfully');
+  };
+
+  const handleToggle2FA = () => {
+    setTwoFactorEnabled(!twoFactorEnabled);
+    showSuccess(twoFactorEnabled ? '2FA disabled' : '2FA enabled');
+  };
+
+  const handleToggleIntegration = (name: string) => {
+    setIntegrations((prev) => ({
+      ...prev,
+      [name]: !prev[name as keyof typeof prev],
+    }));
+    showSuccess(
+      `${name} ${
+        integrations[name as keyof typeof integrations]
+          ? 'disconnected'
+          : 'connected'
+      }`
+    );
+  };
+
+  const handlePreferencesSave = () => {
+    showSuccess('Preferences saved successfully');
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-10 w-full overflow-x-hidden">
+      <ToastContainer toasts={toasts} onClose={removeToast} />
+
       <div className="max-w-[1400px] mx-auto space-y-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Settings</h1>
@@ -82,7 +173,7 @@ const Settings: React.FC = () => {
                   </div>
 
                   {/* Form */}
-                  <div className="space-y-4">
+                  <form onSubmit={handleProfileSave} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">
@@ -90,7 +181,8 @@ const Settings: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          defaultValue="Danish"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
                           className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
                         />
                       </div>
@@ -100,7 +192,8 @@ const Settings: React.FC = () => {
                         </label>
                         <input
                           type="text"
-                          defaultValue="Developer"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
                           className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
                         />
                       </div>
@@ -112,7 +205,8 @@ const Settings: React.FC = () => {
                       </label>
                       <input
                         type="email"
-                        defaultValue="danish@cloudpulse.io"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
                       />
                     </div>
@@ -130,11 +224,14 @@ const Settings: React.FC = () => {
                     </div>
 
                     <div className="pt-4">
-                      <button className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors">
+                      <button
+                        type="submit"
+                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                      >
                         Save Changes
                       </button>
                     </div>
-                  </div>
+                  </form>
                 </div>
               </div>
             )}
@@ -154,24 +251,64 @@ const Settings: React.FC = () => {
                         <h3 className="font-medium">Email Notifications</h3>
                       </div>
                       <div className="space-y-3 ml-8">
-                        {[
-                          { label: 'Service alerts', checked: true },
-                          { label: 'Deployment notifications', checked: true },
-                          { label: 'Weekly reports', checked: false },
-                          { label: 'Security updates', checked: true },
-                        ].map((item, idx) => (
-                          <label
-                            key={idx}
-                            className="flex items-center gap-3 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              defaultChecked={item.checked}
-                              className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
-                            />
-                            <span className="text-sm">{item.label}</span>
-                          </label>
-                        ))}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={emailNotifications.serviceAlerts}
+                            onChange={(e) =>
+                              setEmailNotifications({
+                                ...emailNotifications,
+                                serviceAlerts: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">Service alerts</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={emailNotifications.deployments}
+                            onChange={(e) =>
+                              setEmailNotifications({
+                                ...emailNotifications,
+                                deployments: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">
+                            Deployment notifications
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={emailNotifications.weeklyReports}
+                            onChange={(e) =>
+                              setEmailNotifications({
+                                ...emailNotifications,
+                                weeklyReports: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">Weekly reports</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={emailNotifications.securityUpdates}
+                            onChange={(e) =>
+                              setEmailNotifications({
+                                ...emailNotifications,
+                                securityUpdates: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">Security updates</span>
+                        </label>
                       </div>
                     </div>
 
@@ -182,28 +319,56 @@ const Settings: React.FC = () => {
                         <h3 className="font-medium">Push Notifications</h3>
                       </div>
                       <div className="space-y-3 ml-8">
-                        {[
-                          { label: 'Critical alerts', checked: true },
-                          { label: 'Warning alerts', checked: true },
-                          { label: 'Info alerts', checked: false },
-                        ].map((item, idx) => (
-                          <label
-                            key={idx}
-                            className="flex items-center gap-3 cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              defaultChecked={item.checked}
-                              className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
-                            />
-                            <span className="text-sm">{item.label}</span>
-                          </label>
-                        ))}
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={pushNotifications.critical}
+                            onChange={(e) =>
+                              setPushNotifications({
+                                ...pushNotifications,
+                                critical: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">Critical alerts</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={pushNotifications.warning}
+                            onChange={(e) =>
+                              setPushNotifications({
+                                ...pushNotifications,
+                                warning: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">Warning alerts</span>
+                        </label>
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={pushNotifications.info}
+                            onChange={(e) =>
+                              setPushNotifications({
+                                ...pushNotifications,
+                                info: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff] focus:ring-[#1e90ff]/50"
+                          />
+                          <span className="text-sm">Info alerts</span>
+                        </label>
                       </div>
                     </div>
 
                     <div className="pt-4">
-                      <button className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors">
+                      <button
+                        onClick={handleNotificationsSave}
+                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                      >
                         Save Preferences
                       </button>
                     </div>
@@ -223,13 +388,18 @@ const Settings: React.FC = () => {
                     {/* Change Password */}
                     <div>
                       <h3 className="font-medium mb-4">Change Password</h3>
-                      <div className="space-y-4">
+                      <form
+                        onSubmit={handlePasswordChange}
+                        className="space-y-4"
+                      >
                         <div>
                           <label className="block text-sm font-medium mb-2">
                             Current Password
                           </label>
                           <input
                             type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
                             className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
                           />
                         </div>
@@ -239,6 +409,8 @@ const Settings: React.FC = () => {
                           </label>
                           <input
                             type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
                             className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
                           />
                         </div>
@@ -248,10 +420,18 @@ const Settings: React.FC = () => {
                           </label>
                           <input
                             type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                             className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
                           />
                         </div>
-                      </div>
+                        <button
+                          type="submit"
+                          className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Update Password
+                        </button>
+                      </form>
                     </div>
 
                     {/* Two-Factor Authentication */}
@@ -265,8 +445,15 @@ const Settings: React.FC = () => {
                             Add an extra layer of security to your account
                           </p>
                         </div>
-                        <button className="px-4 py-2 bg-[#00d084] hover:bg-[#00d084]/90 rounded-lg text-sm font-medium transition-colors">
-                          Enable
+                        <button
+                          onClick={handleToggle2FA}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            twoFactorEnabled
+                              ? 'bg-[#ff4757] hover:bg-[#ff4757]/90'
+                              : 'bg-[#00d084] hover:bg-[#00d084]/90'
+                          }`}
+                        >
+                          {twoFactorEnabled ? 'Disable' : 'Enable'}
                         </button>
                       </div>
                     </div>
@@ -308,12 +495,6 @@ const Settings: React.FC = () => {
                         ))}
                       </div>
                     </div>
-
-                    <div className="pt-4">
-                      <button className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors">
-                        Update Password
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -329,42 +510,36 @@ const Settings: React.FC = () => {
                       {
                         name: 'Slack',
                         description: 'Send alerts to Slack channels',
-                        connected: true,
                         icon: '💬',
                       },
                       {
                         name: 'PagerDuty',
                         description: 'Incident management integration',
-                        connected: true,
                         icon: '🚨',
                       },
                       {
                         name: 'Datadog',
                         description: 'Advanced monitoring and analytics',
-                        connected: false,
                         icon: '📊',
                       },
                       {
                         name: 'Jira',
                         description: 'Create issues from alerts',
-                        connected: false,
                         icon: '📋',
                       },
                       {
                         name: 'GitHub',
                         description: 'Link deployments to commits',
-                        connected: true,
                         icon: '🐙',
                       },
                       {
                         name: 'Webhooks',
                         description: 'Custom webhook endpoints',
-                        connected: false,
                         icon: '🔗',
                       },
-                    ].map((integration, idx) => (
+                    ].map((integration) => (
                       <div
-                        key={idx}
+                        key={integration.name}
                         className="p-4 bg-[#242933] rounded-lg border border-[#2d3540]/40 hover:border-[#1e90ff]/40 transition-colors"
                       >
                         <div className="flex items-start justify-between mb-3">
@@ -381,13 +556,22 @@ const Settings: React.FC = () => {
                           </div>
                         </div>
                         <button
+                          onClick={() =>
+                            handleToggleIntegration(integration.name)
+                          }
                           className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                            integration.connected
+                            integrations[
+                              integration.name as keyof typeof integrations
+                            ]
                               ? 'bg-[#00d084]/10 text-[#00d084] hover:bg-[#00d084]/20'
                               : 'bg-[#1e90ff] text-white hover:bg-[#1e90ff]/90'
                           }`}
                         >
-                          {integration.connected ? 'Connected' : 'Connect'}
+                          {integrations[
+                            integration.name as keyof typeof integrations
+                          ]
+                            ? 'Connected'
+                            : 'Connect'}
                         </button>
                       </div>
                     ))}
@@ -408,16 +592,19 @@ const Settings: React.FC = () => {
                     <div>
                       <h3 className="font-medium mb-4">Theme</h3>
                       <div className="grid grid-cols-3 gap-4">
-                        {['Dark', 'Light', 'Auto'].map((theme) => (
+                        {['Dark', 'Light', 'Auto'].map((themeOption) => (
                           <button
-                            key={theme}
+                            key={themeOption}
+                            onClick={() => setTheme(themeOption)}
                             className={`p-4 rounded-lg border transition-colors ${
-                              theme === 'Dark'
+                              theme === themeOption
                                 ? 'border-[#1e90ff] bg-[#1e90ff]/10'
                                 : 'border-[#2d3540]/40 bg-[#242933] hover:border-[#1e90ff]/40'
                             }`}
                           >
-                            <div className="text-sm font-medium">{theme}</div>
+                            <div className="text-sm font-medium">
+                              {themeOption}
+                            </div>
                           </button>
                         ))}
                       </div>
@@ -426,7 +613,11 @@ const Settings: React.FC = () => {
                     {/* Time Zone */}
                     <div className="pt-6 border-t border-[#2d3540]/40">
                       <h3 className="font-medium mb-4">Time Zone</h3>
-                      <select className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]">
+                      <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+                      >
                         <option>UTC+05:00 - Pakistan Standard Time</option>
                         <option>UTC+00:00 - Coordinated Universal Time</option>
                         <option>UTC-05:00 - Eastern Standard Time</option>
@@ -440,7 +631,11 @@ const Settings: React.FC = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm">Logs retention period</span>
-                          <select className="bg-[#242933] border border-[#2d3540]/40 rounded-lg px-3 py-1.5 text-sm">
+                          <select
+                            value={logsRetention}
+                            onChange={(e) => setLogsRetention(e.target.value)}
+                            className="bg-[#242933] border border-[#2d3540]/40 rounded-lg px-3 py-1.5 text-sm"
+                          >
                             <option>7 days</option>
                             <option>30 days</option>
                             <option>90 days</option>
@@ -450,7 +645,13 @@ const Settings: React.FC = () => {
                           <span className="text-sm">
                             Metrics retention period
                           </span>
-                          <select className="bg-[#242933] border border-[#2d3540]/40 rounded-lg px-3 py-1.5 text-sm">
+                          <select
+                            value={metricsRetention}
+                            onChange={(e) =>
+                              setMetricsRetention(e.target.value)
+                            }
+                            className="bg-[#242933] border border-[#2d3540]/40 rounded-lg px-3 py-1.5 text-sm"
+                          >
                             <option>30 days</option>
                             <option>90 days</option>
                             <option>1 year</option>
@@ -460,7 +661,10 @@ const Settings: React.FC = () => {
                     </div>
 
                     <div className="pt-4">
-                      <button className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors">
+                      <button
+                        onClick={handlePreferencesSave}
+                        className="px-6 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+                      >
                         Save Preferences
                       </button>
                     </div>

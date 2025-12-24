@@ -76,10 +76,32 @@ const Services: React.FC = () => {
     }, 1500);
   };
 
-  const handleDeploy = (serviceName: string, version: string) => {
-    showInfo(`Deploying ${serviceName} ${version}...`);
+  const handleDeploy = (
+    serviceName: string,
+    version: string,
+    environment: string
+  ) => {
+    showInfo(`Deploying ${serviceName} ${version} to ${environment}...`);
+
     setTimeout(() => {
-      showSuccess(`${serviceName} ${version} deployed successfully`);
+      const newService = {
+        id: String(services.length + 1),
+        name: serviceName,
+        description: `${serviceName} - ${environment}`,
+        status: 'healthy' as const,
+        uptime: '100%',
+        avgResponse: '0ms',
+        requestsPerMin: '0',
+        errorRate: '0.00%',
+        version: version,
+        deployedAt: 'Just now',
+        icon: 'globe',
+      };
+
+      setServices([...services, newService]);
+      showSuccess(
+        `${serviceName} ${version} deployed successfully to ${environment}`
+      );
       setShowDeployModal(false);
     }, 2000);
   };
@@ -281,7 +303,8 @@ const Services: React.FC = () => {
             const formData = new FormData(e.currentTarget);
             const serviceName = formData.get('serviceName') as string;
             const version = formData.get('version') as string;
-            handleDeploy(serviceName, version);
+            const environment = formData.get('environment') as string;
+            handleDeploy(serviceName, version, environment);
           }}
           className="space-y-4"
         >
@@ -311,7 +334,10 @@ const Services: React.FC = () => {
             <label className="block text-sm font-medium mb-2">
               Environment
             </label>
-            <select className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]">
+            <select
+              name="environment"
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+            >
               <option>Production</option>
               <option>Staging</option>
               <option>Development</option>
