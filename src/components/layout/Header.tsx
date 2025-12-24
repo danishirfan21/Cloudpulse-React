@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, Search, Menu, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { TimeRange } from '../../types';
 import { mockServices, mockAPIEndpoints } from '../../utils/mockData';
 
@@ -201,7 +201,10 @@ const Header: React.FC<HeaderProps> = ({
         </button>
 
         {/* Logo */}
-        <div className="flex items-center gap-3">
+        <Link
+          to="/"
+          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+        >
           <div className="w-8 h-8 bg-[#1e90ff] rounded-lg flex items-center justify-center">
             <svg
               className="w-5 h-5 text-white"
@@ -218,7 +221,7 @@ const Header: React.FC<HeaderProps> = ({
             </svg>
           </div>
           <span className="text-lg font-semibold">CloudPulse</span>
-        </div>
+        </Link>
 
         {/* Global Search */}
         <div
