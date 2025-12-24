@@ -1,0 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: #0f1419;
+  color: #e4e6eb;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Pulse animation for warning dots */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* Healthy service pulse - subtle */
+@keyframes pulse-healthy {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.95; }
+}
+
+.pulse-healthy {
+  animation: pulse-healthy 0.8s ease-in-out infinite;
+}
+
+/* Scale animation on load - happens once */
+@keyframes scale-once {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.animate-scale-once {
+  animation: scale-once 0.4s ease-out;
+}
+
+/* Tabular figures for numbers */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Left accent helpers using inset box-shadow */
+.accent-left-success { box-shadow: inset 4px 0 0 0 rgba(0,208,132,1); }
+.accent-left-warning { box-shadow: inset 4px 0 0 0 rgba(255,165,2,1); }
+.accent-left-error   { box-shadow: inset 4px 0 0 0 rgba(255,71,87,1); }
+.accent-left-info    { box-shadow: inset 4px 0 0 0 rgba(30,144,255,1); }
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1f29;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2d3540;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3d4550;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+button, a {
+  transition-duration: 200ms;
+}
