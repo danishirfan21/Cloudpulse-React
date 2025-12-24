@@ -88,17 +88,25 @@ const Settings: React.FC = () => {
         if (settings.avatarPreview) setAvatarPreview(settings.avatarPreview);
 
         // Load notification preferences
-        if (settings.emailNotifications) setEmailNotifications(settings.emailNotifications);
-        if (settings.pushNotifications) setPushNotifications(settings.pushNotifications);
+        if (settings.emailNotifications)
+          setEmailNotifications(settings.emailNotifications);
+        if (settings.pushNotifications)
+          setPushNotifications(settings.pushNotifications);
 
         // Load security settings
-        if (settings.twoFactorEnabled !== undefined) setTwoFactorEnabled(settings.twoFactorEnabled);
+        if (settings.twoFactorEnabled !== undefined)
+          setTwoFactorEnabled(settings.twoFactorEnabled);
 
         // Load preferences
-        if (settings.theme) setTheme(settings.theme);
+        if (settings.theme && settings.theme === 'Dark') {
+          setTheme(settings.theme);
+        } else {
+          setTheme('Dark'); // Force dark theme if it was Light or Auto
+        }
         if (settings.timezone) setTimezone(settings.timezone);
         if (settings.logsRetention) setLogsRetention(settings.logsRetention);
-        if (settings.metricsRetention) setMetricsRetention(settings.metricsRetention);
+        if (settings.metricsRetention)
+          setMetricsRetention(settings.metricsRetention);
 
         // Load integrations
         if (settings.integrations) setIntegrations(settings.integrations);
@@ -318,7 +326,11 @@ const Settings: React.FC = () => {
                     <div className="relative">
                       <div className="w-20 h-20 bg-[#1e90ff] rounded-full flex items-center justify-center text-2xl font-medium overflow-hidden">
                         {avatarPreview ? (
-                          <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                          <img
+                            src={avatarPreview}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           'D'
                         )}
@@ -782,24 +794,45 @@ const Settings: React.FC = () => {
                   <div className="space-y-6">
                     {/* Theme */}
                     <div>
-                      <h3 className="font-medium mb-4">Theme</h3>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium">Theme</h3>
+                        <span className="text-xs text-[#8b93a7] bg-[#ffa502]/10 text-[#ffa502] px-2 py-1 rounded">
+                          Coming Soon
+                        </span>
+                      </div>
                       <div className="grid grid-cols-3 gap-4">
                         {['Dark', 'Light', 'Auto'].map((themeOption) => (
                           <button
                             key={themeOption}
-                            onClick={() => setTheme(themeOption)}
+                            disabled={themeOption !== 'Dark'}
+                            onClick={() => {
+                              if (themeOption === 'Dark') {
+                                setTheme(themeOption);
+                              }
+                            }}
                             className={`p-4 rounded-lg border transition-colors ${
                               theme === themeOption
                                 ? 'border-[#1e90ff] bg-[#1e90ff]/10'
                                 : 'border-[#2d3540]/40 bg-[#242933] hover:border-[#1e90ff]/40'
+                            } ${
+                              themeOption !== 'Dark'
+                                ? 'opacity-40 cursor-not-allowed'
+                                : ''
                             }`}
                           >
-                            <div className="text-sm font-medium">
+                            <div className="text-sm font-medium flex items-center justify-center gap-2">
                               {themeOption}
+                              {themeOption !== 'Dark' && (
+                                <span className="text-xs">🔒</span>
+                              )}
                             </div>
                           </button>
                         ))}
                       </div>
+                      <p className="text-xs text-[#8b93a7] mt-3">
+                        Light and Auto themes are currently in development and
+                        will be available in a future update.
+                      </p>
                     </div>
 
                     {/* Time Zone */}
