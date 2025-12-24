@@ -33,6 +33,22 @@ body {
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+/* Slide in animation for toasts */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
 /* Healthy service pulse - subtle */
 @keyframes pulse-healthy {
   0%, 100% { opacity: 1; }

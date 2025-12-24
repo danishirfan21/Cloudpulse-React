@@ -1,8 +1,28 @@
-import React from 'react';
-import { AlertTriangle, CheckCircle, Info, Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Bell,
+  Filter,
+  Search,
+} from 'lucide-react';
+import Modal from '../components/common/Modal';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/common/Toast';
+
+interface Alert {
+  id: string;
+  title: string;
+  service: string;
+  severity: 'critical' | 'warning' | 'info';
+  message: string;
+  time: string;
+  acknowledged: boolean;
+}
 
 const Alerts: React.FC = () => {
-  const alerts = [
+  const [alerts, setAlerts] = useState<Alert[]>([
     {
       id: '1',
       title: 'High Memory Usage',
@@ -39,7 +59,13 @@ const Alerts: React.FC = () => {
       time: '3 hours ago',
       acknowledged: true,
     },
-  ];
+  ]);
+
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [filterSeverity, setFilterSeverity] = useState<string>('all');
+  const [showAcknowledged, setShowAcknowledged] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const { toasts, removeToast, showSuccess, showInfo } = useToast();
 
   const getSeverityConfig = (severity: string) => {
     switch (severity) {
@@ -54,8 +80,52 @@ const Alerts: React.FC = () => {
     }
   };
 
+  const handleAcknowledge = (alertId: string) => {
+    const alert = alerts.find((a) => a.id === alertId);
+    setAlerts(
+      alerts.map((a) => (a.id === alertId ? { ...a, acknowledged: true } : a))
+    );
+    showSuccess(`Alert "${alert?.title}" acknowledged`);
+  };
+
+  const handleAcknowledgeAll = () => {
+    setAlerts(alerts.map((a) => ({ ...a, acknowledged: true })));
+    showSuccess('All alerts acknowledged');
+  };
+
+  const handleClearAcknowledged = () => {
+    setAlerts(alerts.filter((a) => !a.acknowledged));
+    showInfo('Acknowledged alerts cleared');
+  };
+
+  const handleAddRule = (name: string, condition: string, severity: string) => {
+    showSuccess(`Alert rule "${name}" created successfully`);
+    setShowConfigModal(false);
+  };
+
+  const filteredAlerts = alerts.filter((alert) => {
+    const matchesSeverity =
+      filterSeverity === 'all' || alert.severity === filterSeverity;
+    const matchesAcknowledged = showAcknowledged || !alert.acknowledged;
+    const matchesSearch =
+      alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alert.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      alert.message.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSeverity && matchesAcknowledged && matchesSearch;
+  });
+
+  const activeCount = alerts.filter((a) => !a.acknowledged).length;
+  const criticalCount = alerts.filter(
+    (a) => a.severity === 'critical' && !a.acknowledged
+  ).length;
+  const warningCount = alerts.filter(
+    (a) => a.severity === 'warning' && !a.acknowledged
+  ).length;
+
   return (
     <div className="p-4 md:p-6 lg:p-10 w-full overflow-x-hidden">
+      <ToastContainer toasts={toasts} onClose={removeToast} />
+
       <div className="max-w-[1400px] mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -64,34 +134,108 @@ const Alerts: React.FC = () => {
               Manage and respond to system alerts
             </p>
           </div>
-          <button className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors">
-            Configure Rules
-          </button>
+          <div className="flex gap-2">
+            {activeCount > 0 && (
+              <button
+                className="px-4 py-2 bg-[#00d084] hover:bg-[#00d084]/90 rounded-lg text-sm font-medium transition-colors"
+                onClick={handleAcknowledgeAll}
+              >
+                Acknowledge All
+              </button>
+            )}
+            <button
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+              onClick={() => setShowConfigModal(true)}
+            >
+              Configure Rules
+            </button>
+          </div>
         </div>
 
         {/* Summary */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-[#1a1f29] rounded-lg border border-[#2d3540]/40 p-4">
             <div className="text-sm text-[#8b93a7] mb-1">Active Alerts</div>
-            <div className="text-2xl font-bold">4</div>
+            <div className="text-2xl font-bold">{activeCount}</div>
           </div>
           <div className="bg-[#1a1f29] rounded-lg border border-[#ff4757]/20 p-4">
             <div className="text-sm text-[#8b93a7] mb-1">Critical</div>
-            <div className="text-2xl font-bold text-[#ff4757]">1</div>
+            <div className="text-2xl font-bold text-[#ff4757]">
+              {criticalCount}
+            </div>
           </div>
           <div className="bg-[#1a1f29] rounded-lg border border-[#ffa502]/20 p-4">
             <div className="text-sm text-[#8b93a7] mb-1">Warnings</div>
-            <div className="text-2xl font-bold text-[#ffa502]">2</div>
+            <div className="text-2xl font-bold text-[#ffa502]">
+              {warningCount}
+            </div>
           </div>
           <div className="bg-[#1a1f29] rounded-lg border border-[#2d3540]/40 p-4">
             <div className="text-sm text-[#8b93a7] mb-1">Acknowledged</div>
-            <div className="text-2xl font-bold">2</div>
+            <div className="text-2xl font-bold">
+              {alerts.filter((a) => a.acknowledged).length}
+            </div>
           </div>
         </div>
 
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search alerts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-[#1a1f29] border border-[#2d3540]/40 rounded-lg px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+              />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#8b93a7]" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-2 bg-[#1a1f29] rounded-lg p-1 border border-[#2d3540]/40">
+              <Filter className="w-4 h-4 ml-2 text-[#8b93a7]" />
+              {['all', 'critical', 'warning', 'info'].map((severity) => (
+                <button
+                  key={severity}
+                  onClick={() => setFilterSeverity(severity)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded transition-colors capitalize ${
+                    filterSeverity === severity
+                      ? 'bg-[#1e90ff] text-white'
+                      : 'text-[#8b93a7] hover:bg-[#242933]'
+                  }`}
+                >
+                  {severity}
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 bg-[#1a1f29] rounded-lg px-4 py-2 border border-[#2d3540]/40 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showAcknowledged}
+                onChange={(e) => setShowAcknowledged(e.target.checked)}
+                className="w-4 h-4 rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
+              />
+              <span className="text-sm">Show Acknowledged</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        {alerts.some((a) => a.acknowledged) && (
+          <div className="flex justify-end">
+            <button
+              onClick={handleClearAcknowledged}
+              className="text-sm text-[#8b93a7] hover:text-[#e4e6eb] transition-colors"
+            >
+              Clear Acknowledged Alerts
+            </button>
+          </div>
+        )}
+
         {/* Alerts List */}
         <div className="space-y-3">
-          {alerts.map((alert) => {
+          {filteredAlerts.map((alert) => {
             const config = getSeverityConfig(alert.severity);
             const Icon = config.icon;
 
@@ -145,7 +289,10 @@ const Alerts: React.FC = () => {
                         <span>{alert.time}</span>
                       </div>
                       {!alert.acknowledged && (
-                        <button className="px-3 py-1 bg-[#242933] hover:bg-[#2d3540] rounded text-sm transition-colors">
+                        <button
+                          className="px-3 py-1 bg-[#242933] hover:bg-[#2d3540] rounded text-sm transition-colors"
+                          onClick={() => handleAcknowledge(alert.id)}
+                        >
                           Acknowledge
                         </button>
                       )}
@@ -156,7 +303,117 @@ const Alerts: React.FC = () => {
             );
           })}
         </div>
+
+        {filteredAlerts.length === 0 && (
+          <div className="text-center py-12 text-[#8b93a7]">
+            {searchQuery
+              ? 'No alerts found matching your search'
+              : 'No active alerts'}
+          </div>
+        )}
       </div>
+
+      {/* Configure Rules Modal */}
+      <Modal
+        isOpen={showConfigModal}
+        onClose={() => setShowConfigModal(false)}
+        title="Configure Alert Rules"
+        size="md"
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            const formData = new FormData(e.currentTarget);
+            const name = formData.get('name') as string;
+            const condition = formData.get('condition') as string;
+            const severity = formData.get('severity') as string;
+            handleAddRule(name, condition, severity);
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <label className="block text-sm font-medium mb-2">Rule Name</label>
+            <input
+              type="text"
+              name="name"
+              required
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+              placeholder="e.g., High CPU Usage"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Condition</label>
+            <select
+              name="condition"
+              required
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+            >
+              <option>CPU usage &gt; 80%</option>
+              <option>Memory usage &gt; 85%</option>
+              <option>Response time &gt; 500ms</option>
+              <option>Error rate &gt; 1%</option>
+              <option>Disk space &lt; 10%</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Severity</label>
+            <select
+              name="severity"
+              required
+              className="w-full bg-[#242933] border border-[#2d3540]/40 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1e90ff]/50 focus:border-[#1e90ff]"
+            >
+              <option value="critical">Critical</option>
+              <option value="warning">Warning</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Notification Channels
+            </label>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
+                />
+                <span className="text-sm">Email</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  defaultChecked
+                  className="rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
+                />
+                <span className="text-sm">Slack</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="rounded border-[#2d3540] bg-[#242933] text-[#1e90ff]"
+                />
+                <span className="text-sm">PagerDuty</span>
+              </label>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowConfigModal(false)}
+              className="px-4 py-2 bg-[#242933] hover:bg-[#2d3540] rounded-lg text-sm transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[#1e90ff] hover:bg-[#1e90ff]/90 rounded-lg text-sm font-medium transition-colors"
+            >
+              Create Rule
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
