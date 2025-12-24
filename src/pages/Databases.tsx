@@ -131,7 +131,7 @@ const Databases: React.FC = () => {
       lastBackup: 'Never',
     };
 
-    setDatabases([...databases, newDatabase]);
+    setDatabases([newDatabase, ...databases]);
     showSuccess(`Database ${name} added successfully`);
     setShowAddModal(false);
   };

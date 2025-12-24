@@ -50,7 +50,7 @@ const APIs: React.FC = () => {
       avgLatency: '0ms',
       errorRate: '0.00%',
     };
-    setEndpoints([...endpoints, newEndpoint]);
+    setEndpoints([newEndpoint, ...endpoints]);
     showSuccess(`Endpoint ${path} added successfully`);
     setShowAddModal(false);
   };
@@ -129,7 +129,7 @@ const APIs: React.FC = () => {
           <div className="flex gap-2">
             <div className="flex items-center gap-2 bg-[#1a1f29] rounded-lg p-1 border border-[#2d3540]/40">
               <Filter className="w-4 h-4 ml-2 text-[#8b93a7]" />
-              {['all', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map(
+              {['All', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map(
                 (method) => (
                   <button
                     key={method}

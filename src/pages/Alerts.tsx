@@ -130,7 +130,7 @@ const Alerts: React.FC = () => {
       notifications,
     };
 
-    setAlertRules([...alertRules, newRule]);
+    setAlertRules([newRule, ...alertRules]);
     showSuccess(`Alert rule "${name}" created successfully`);
     setShowConfigModal(false);
   };

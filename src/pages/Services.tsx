@@ -98,7 +98,7 @@ const Services: React.FC = () => {
         icon: 'globe',
       };
 
-      setServices([...services, newService]);
+      setServices([newService, ...services]);
       showSuccess(
         `${serviceName} ${version} deployed successfully to ${environment}`
       );
