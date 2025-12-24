@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   User,
   Bell,
@@ -14,7 +14,7 @@ import { ToastContainer } from '../components/common/Toast';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  const { toasts, removeToast, showSuccess } = useToast();
+  const { toasts, removeToast, showSuccess, showError } = useToast();
 
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingNotifications, setIsSavingNotifications] = useState(false);
@@ -67,6 +67,65 @@ const Settings: React.FC = () => {
     Webhooks: false,
   });
 
+  // Avatar state
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Load saved settings from localStorage on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('cloudpulse_settings');
+    if (savedSettings) {
+      try {
+        const settings = JSON.parse(savedSettings);
+
+        // Load profile data
+        if (settings.firstName) setFirstName(settings.firstName);
+        if (settings.lastName) setLastName(settings.lastName);
+        if (settings.email) setEmail(settings.email);
+        if (settings.avatarPreview) setAvatarPreview(settings.avatarPreview);
+
+        // Load notification preferences
+        if (settings.emailNotifications) setEmailNotifications(settings.emailNotifications);
+        if (settings.pushNotifications) setPushNotifications(settings.pushNotifications);
+
+        // Load security settings
+        if (settings.twoFactorEnabled !== undefined) setTwoFactorEnabled(settings.twoFactorEnabled);
+
+        // Load preferences
+        if (settings.theme) setTheme(settings.theme);
+        if (settings.timezone) setTimezone(settings.timezone);
+        if (settings.logsRetention) setLogsRetention(settings.logsRetention);
+        if (settings.metricsRetention) setMetricsRetention(settings.metricsRetention);
+
+        // Load integrations
+        if (settings.integrations) setIntegrations(settings.integrations);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    }
+  }, []);
+
+  const saveSettingsToLocalStorage = () => {
+    const settings = {
+      firstName,
+      lastName,
+      email,
+      avatarPreview,
+      emailNotifications,
+      pushNotifications,
+      twoFactorEnabled,
+      theme,
+      timezone,
+      logsRetention,
+      metricsRetention,
+      integrations,
+    };
+    localStorage.setItem('cloudpulse_settings', JSON.stringify(settings));
+  };
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -79,6 +138,7 @@ const Settings: React.FC = () => {
     e.preventDefault();
     setIsSavingProfile(true);
     setTimeout(() => {
+      saveSettingsToLocalStorage();
       showSuccess('Profile updated successfully');
       setIsSavingProfile(false);
     }, 1000);
@@ -87,6 +147,7 @@ const Settings: React.FC = () => {
   const handleNotificationsSave = () => {
     setIsSavingNotifications(true);
     setTimeout(() => {
+      saveSettingsToLocalStorage();
       showSuccess('Notification preferences saved');
       setIsSavingNotifications(false);
     }, 1000);
@@ -95,6 +156,7 @@ const Settings: React.FC = () => {
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
+      showError('Passwords do not match');
       return;
     }
     setIsSavingPassword(true);
@@ -110,6 +172,7 @@ const Settings: React.FC = () => {
   const handlePreferencesSave = () => {
     setIsSavingPreferences(true);
     setTimeout(() => {
+      saveSettingsToLocalStorage();
       showSuccess('Preferences saved successfully');
       setIsSavingPreferences(false);
     }, 1000);
@@ -118,8 +181,16 @@ const Settings: React.FC = () => {
   const handleToggle2FA = () => {
     setIsToggling2FA(true);
     setTimeout(() => {
-      setTwoFactorEnabled(!twoFactorEnabled);
-      showSuccess(twoFactorEnabled ? '2FA disabled' : '2FA enabled');
+      const newTwoFactor = !twoFactorEnabled;
+      setTwoFactorEnabled(newTwoFactor);
+
+      // Persist updated 2FA value
+      const savedSettings = localStorage.getItem('cloudpulse_settings');
+      const settings = savedSettings ? JSON.parse(savedSettings) : {};
+      settings.twoFactorEnabled = newTwoFactor;
+      localStorage.setItem('cloudpulse_settings', JSON.stringify(settings));
+
+      showSuccess(newTwoFactor ? '2FA enabled' : '2FA disabled');
       setIsToggling2FA(false);
     }, 1000);
   };
@@ -127,19 +198,72 @@ const Settings: React.FC = () => {
   const handleToggleIntegration = (name: string) => {
     setTogglingIntegration(name);
     setTimeout(() => {
+      // Update state
       setIntegrations((prev) => ({
         ...prev,
         [name]: !prev[name as keyof typeof prev],
       }));
+
+      // Save updated integrations using current state + toggle
+      const updated = {
+        ...integrations,
+        [name]: !integrations[name as keyof typeof integrations],
+      };
+      const savedSettings = localStorage.getItem('cloudpulse_settings');
+      const settings = savedSettings ? JSON.parse(savedSettings) : {};
+      settings.integrations = updated;
+      localStorage.setItem('cloudpulse_settings', JSON.stringify(settings));
+
       showSuccess(
-        `${name} ${
-          integrations[name as keyof typeof integrations]
-            ? 'disconnected'
-            : 'connected'
-        }`
+        `${name} ${updated[name as keyof typeof updated] ? 'connected' : 'disconnected'}`
       );
       setTogglingIntegration(null);
     }, 1000);
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        showError('File size must be less than 2MB');
+        return;
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        showError('Please upload an image file');
+        return;
+      }
+
+      setAvatarFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const preview = reader.result as string;
+        setAvatarPreview(preview);
+
+        // Save immediately to localStorage
+        const savedSettings = localStorage.getItem('cloudpulse_settings');
+        const settings = savedSettings ? JSON.parse(savedSettings) : {};
+        settings.avatarPreview = preview;
+        localStorage.setItem('cloudpulse_settings', JSON.stringify(settings));
+        
+        // Dispatch custom event to update header in same tab
+        window.dispatchEvent(new Event('avatar-updated'));
+      };
+      reader.readAsDataURL(file);
+      
+      // Simulate upload
+      setIsUploadingAvatar(true);
+      setTimeout(() => {
+        showSuccess('Avatar updated successfully');
+        setIsUploadingAvatar(false);
+      }, 1500);
+    }
   };
 
   return (
@@ -191,12 +315,35 @@ const Settings: React.FC = () => {
 
                   {/* Avatar */}
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-20 h-20 bg-[#1e90ff] rounded-full flex items-center justify-center text-2xl font-medium">
-                      D
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-[#1e90ff] rounded-full flex items-center justify-center text-2xl font-medium overflow-hidden">
+                        {avatarPreview ? (
+                          <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          'D'
+                        )}
+                      </div>
+                      {isUploadingAvatar && (
+                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
                     </div>
                     <div>
-                      <button className="px-4 py-2 bg-[#242933] hover:bg-[#2d3540] rounded-lg text-sm transition-colors">
-                        Change Avatar
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAvatarClick}
+                        disabled={isUploadingAvatar}
+                        className="px-4 py-2 bg-[#242933] hover:bg-[#2d3540] rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isUploadingAvatar ? 'Uploading...' : 'Change Avatar'}
                       </button>
                       <p className="text-xs text-[#8b93a7] mt-2">
                         JPG, PNG or GIF. Max size 2MB.

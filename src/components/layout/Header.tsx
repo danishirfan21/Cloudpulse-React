@@ -26,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -114,6 +115,44 @@ const Header: React.FC<HeaderProps> = ({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  React.useEffect(() => {
+    const loadAvatar = () => {
+      const savedSettings = localStorage.getItem('cloudpulse_settings');
+      if (savedSettings) {
+        try {
+          const settings = JSON.parse(savedSettings);
+          if (settings.avatarPreview) {
+            setAvatarPreview(settings.avatarPreview);
+          }
+        } catch (error) {
+          console.error('Failed to load avatar:', error);
+        }
+      }
+    };
+
+    // Load on mount
+    loadAvatar();
+
+    // Listen for storage changes (other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cloudpulse_settings') {
+        loadAvatar();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for custom event from same tab
+    const handleCustomUpdate = () => {
+      loadAvatar();
+    };
+    window.addEventListener('avatar-updated', handleCustomUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('avatar-updated', handleCustomUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -360,10 +399,15 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* User Avatar */}
           <div
-            className="w-8 h-8 bg-[#1e90ff] rounded-full flex items-center justify-center text-sm font-medium cursor-pointer hover:ring-2 hover:ring-[#1e90ff]/50 transition-all"
+            className="w-8 h-8 bg-[#1e90ff] rounded-full flex items-center justify-center text-sm font-medium cursor-pointer hover:ring-2 hover:ring-[#1e90ff]/50 transition-all overflow-hidden"
             onClick={() => navigate('/settings')}
+            title="Settings"
           >
-            D
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              'D'
+            )}
           </div>
         </div>
       </div>
