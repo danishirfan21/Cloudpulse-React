@@ -72,8 +72,8 @@ const Header: React.FC<HeaderProps> = ({
       path: '/settings',
     },
   ];
-
-  const notifications = [
+  
+  const [notifications, setNotifications] = useState([
     {
       id: '1',
       title: 'High Memory Usage',
@@ -95,7 +95,15 @@ const Header: React.FC<HeaderProps> = ({
       time: '1h ago',
       read: true,
     },
-  ];
+  ]);
+
+  const handleNotificationClick = (notificationId: string) => {
+    setNotifications((prev) =>
+      prev.map((notif) => (notif.id === notificationId ? { ...notif, read: true } : notif))
+    );
+    navigate('/alerts');
+    setShowNotifications(false);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -345,7 +353,9 @@ const Header: React.FC<HeaderProps> = ({
               onClick={() => setShowNotifications(!showNotifications)}
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#ffa502] rounded-full pulse-dot"></span>
+              {notifications.filter((n) => !n.read).length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 bg-[#ffa502] rounded-full pulse-dot"></span>
+              )}
             </button>
 
             {/* Notifications Dropdown */}
@@ -354,12 +364,28 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="p-4 border-b border-[#2d3540]/40">
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">Notifications</h3>
-                    <button
-                      className="text-xs text-[#1e90ff] hover:underline"
-                      onClick={() => navigate('/alerts')}
-                    >
-                      View All
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {notifications.filter((n) => !n.read).length > 0 && (
+                        <button
+                          className="text-xs text-[#1e90ff] hover:underline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setNotifications((prev) => prev.map((notif) => ({ ...notif, read: true })));
+                          }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                      <button
+                        className="text-xs text-[#1e90ff] hover:underline"
+                        onClick={() => {
+                          navigate('/alerts');
+                          setShowNotifications(false);
+                        }}
+                      >
+                        View All
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
@@ -369,10 +395,7 @@ const Header: React.FC<HeaderProps> = ({
                       className={`p-4 border-b border-[#2d3540]/40 last:border-0 hover:bg-[#242933] transition-colors cursor-pointer ${
                         !notif.read ? 'bg-[#1e90ff]/5' : ''
                       }`}
-                      onClick={() => {
-                        navigate('/alerts');
-                        setShowNotifications(false);
-                      }}
+                      onClick={() => handleNotificationClick(notif.id)}
                     >
                       <div className="flex items-start gap-3">
                         {!notif.read && (
