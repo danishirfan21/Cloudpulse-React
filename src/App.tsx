@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Sidebar from './components/layout/Sidebar';
+import ScrollToTop from './components/common/ScrollToTop';
 import Dashboard from './pages/Dashboard';
 import Services from './pages/Services';
 import APIs from './pages/APIs';
@@ -31,6 +32,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <ScrollToTop />
       <div className="min-h-screen bg-[#0f1419] text-[#e4e6eb]">
         <Header
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
