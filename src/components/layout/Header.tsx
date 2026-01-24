@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Bell, Search, Menu, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TimeRange } from '../../types';
@@ -33,7 +33,7 @@ const Header: React.FC<HeaderProps> = ({
 
   const timeRanges: TimeRange[] = ['1h', '6h', '24h', '7d', 'custom'];
 
-  const pages: SearchResult[] = [
+  const pages: SearchResult[] = useMemo(() => [
     {
       type: 'page',
       title: 'Dashboard',
@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({
       description: 'Application settings',
       path: '/settings',
     },
-  ];
+  ], []);
   
   const [notifications, setNotifications] = useState([
     {

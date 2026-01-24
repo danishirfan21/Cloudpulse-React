@@ -18,7 +18,7 @@ const APIs: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterMethod, setFilterMethod] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const filterStatus = 'all'; // Status filter not implemented in UI yet
   const [searchQuery, setSearchQuery] = useState('');
   const { toasts, removeToast, showSuccess, showInfo } = useToast();
 

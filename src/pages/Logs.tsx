@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { mockLogs } from '../utils/mockData';
 import { Search, Filter, Download, Play, Pause } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
@@ -14,10 +14,10 @@ const Logs: React.FC = () => {
   const { toasts, removeToast, showSuccess, showInfo } = useToast();
 
   // Get unique services
-  const services = [
+  const services = useMemo(() => [
     'all',
     ...Array.from(new Set(mockLogs.map((log) => log.service))),
-  ];
+  ], []);
 
   const levelColors: { [key: string]: { bg: string; text: string } } = {
     ERROR: { bg: '#ff4757', text: '#ffffff' },
