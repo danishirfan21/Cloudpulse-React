@@ -215,7 +215,7 @@ const Header: React.FC<HeaderProps> = ({
 
     setSearchResults(results.slice(0, 8));
     setShowResults(true);
-  }, [searchQuery]);
+  }, [searchQuery, pages]);
 
   const handleResultClick = (result: SearchResult) => {
     navigate(result.path);

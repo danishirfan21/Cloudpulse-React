@@ -64,7 +64,7 @@ const Logs: React.FC = () => {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isStreaming]);
+  }, [isStreaming, services]);
 
   const handleExport = () => {
     const logText = filteredLogs

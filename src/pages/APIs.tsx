@@ -9,7 +9,6 @@ import {
   Filter,
   Play,
   Pause,
-  TrendingUp,
 } from 'lucide-react';
 
 const APIs: React.FC = () => {
@@ -19,9 +18,7 @@ const APIs: React.FC = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filterMethod, setFilterMethod] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<
-    'all' | 'healthy' | 'degraded' | 'down'
-  >('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const { toasts, removeToast, showSuccess, showInfo } = useToast();
 

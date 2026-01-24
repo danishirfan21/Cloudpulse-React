@@ -50,7 +50,7 @@ const ToastNotification: React.FC<ToastProps> = ({
     },
   };
 
-  const { icon: Icon, color, bg } = config[type];
+  const { icon: Icon, color } = config[type];
 
   return (
     <div

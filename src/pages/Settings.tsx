@@ -4,7 +4,6 @@ import {
   Bell,
   Shield,
   Database,
-  Globe,
   Palette,
   Mail,
   Smartphone,
@@ -68,7 +67,6 @@ const Settings: React.FC = () => {
   });
 
   // Avatar state
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
@@ -245,8 +243,6 @@ const Settings: React.FC = () => {
         showError('Please upload an image file');
         return;
       }
-
-      setAvatarFile(file);
       
       // Create preview
       const reader = new FileReader();

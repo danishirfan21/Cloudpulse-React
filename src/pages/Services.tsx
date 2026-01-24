@@ -15,7 +15,6 @@ import {
   RotateCw,
   Play,
   Pause,
-  XCircle,
 } from 'lucide-react';
 
 const iconMap: { [key: string]: any } = {
